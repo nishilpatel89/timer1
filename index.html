@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Reality Check</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+            --work-color: #2ecc71; /* Green */
+            --break-color: #e67e22; /* Orange */
+            --inactive-opacity: 0.25;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; 
+        }
+
+        .container {
+            background: var(--card-bg);
+            /* Padding scales with viewport width */
+            padding: clamp(1rem, 3vw, 3rem); 
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            text-align: center;
+            width: 90%;
+            max-width: 600px; /* Slightly wider to accommodate big numbers */
+            max-height: 98vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: clamp(1rem, 4vw, 1.8rem);
+            margin: 0 0 clamp(1rem, 3vw, 2rem) 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            color: #333;
+        }
+
+        /* Timer Display Area */
+        .timers-wrapper {
+            display: flex;
+            flex-direction: column; /* Stack them for better scaling */
+            gap: clamp(0.5rem, 2vh, 2rem);
+            margin-bottom: clamp(1rem, 3vh, 2rem);
+        }
+
+        .timer-block {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            opacity: var(--inactive-opacity);
+            transform: scale(0.98);
+            display: flex;
+            align-items: center; /* Center items horizontally in flex column */
+            justify-content: space-between;
+            padding: 0 1rem;
+            border-radius: 12px;
+        }
+
+        .timer-block.active {
+            opacity: 1;
+            transform: scale(1);
+            background-color: rgba(0,0,0,0.03); /* Subtle highlight for active row */
+        }
+
+        .timer-label {
+            font-size: clamp(0.7rem, 2.5vw, 1rem);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-align: left;
+            flex: 1;
+        }
+
+        .time-display {
+            font-family: 'Courier New', Courier, monospace;
+            /* This is the key fix: Font size is based on Viewport Width (vw) */
+            font-size: clamp(1.8rem, 11vw, 4.5rem); 
+            line-height: 1;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+
+        /* Color States */
+        .timer-block#work-block.active .time-display { color: var(--work-color); }
+        .timer-block#work-block.active .timer-label { color: var(--work-color); }
+        
+        .timer-block#break-block.active .time-display { color: var(--break-color); }
+        .timer-block#break-block.active .timer-label { color: var(--break-color); }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        button {
+            border: none;
+            padding: clamp(0.8rem, 2vh, 1.2rem);
+            border-radius: 10px;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            cursor: pointer;
+            transition: filter 0.2s, transform 0.1s;
+            font-weight: 600;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:active { transform: translateY(2px); }
+
+        /* The Big Switch Button */
+        #switch-btn {
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            font-size: clamp(1rem, 3.5vw, 1.3rem); /* Make main button pop */
+        }
+        
+        /* Secondary Buttons */
+        .secondary-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .secondary-btn {
+            flex: 1;
+            background-color: #ececec;
+            color: #666;
+        }
+        .secondary-btn:hover { background-color: #dedede; }
+
+        /* Initial Start Screen Overlay */
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 10;
+        }
+        
+        #start-btn {
+            background-color: var(--work-color);
+            color: white;
+            width: auto;
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Pause Indicator */
+        .paused-badge {
+            margin-top: 10px;
+            color: #e74c3c;
+            font-weight: 800;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0;
+            height: 1rem;
+            transition: opacity 0.3s;
+        }
+        .paused-badge.visible { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="start-screen">
+            <h1>The Reality Check</h1>
+            <button id="start-btn">Start Day</button>
+        </div>
+
+        <h1>The Reality Check</h1>
+
+        <div class="timers-wrapper">
+            <div id="work-block" class="timer-block active">
+                <div class="timer-label">Working</div>
+                <div class="time-display" id="work-time">00:00:00</div>
+            </div>
+
+            <div id="break-block" class="timer-block">
+                <div class="timer-label">Not Working</div>
+                <div class="time-display" id="break-time">00:00:00</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="switch-btn">Switch to Not Working</button>
+            
+            <div class="secondary-controls">
+                <button class="secondary-btn" id="pause-btn">Pause</button>
+                <button class="secondary-btn" id="reset-btn">Reset</button>
+            </div>
+        </div>
+        
+        <div class="paused-badge" id="paused-badge">Timer Paused</div>
+    </div>
+
+    <script>
+        // State Variables
+        let workSeconds = 0;
+        let breakSeconds = 0;
+        let isWorking = true; 
+        let isPaused = false;
+        let intervalId = null;
+        let hasStarted = false;
+
+        // DOM Elements
+        const workDisplay = document.getElementById('work-time');
+        const breakDisplay = document.getElementById('break-time');
+        const workBlock = document.getElementById('work-block');
+        const breakBlock = document.getElementById('break-block');
+        const switchBtn = document.getElementById('switch-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const startScreen = document.getElementById('start-screen');
+        const pausedBadge = document.getElementById('paused-badge');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Format Time Helper (HH:MM:SS)
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return [hours, minutes, seconds]
+                .map(v => v < 10 ? "0" + v : v)
+                .join(":");
+        }
+
+        function updateDisplay() {
+            workDisplay.textContent = formatTime(workSeconds);
+            breakDisplay.textContent = formatTime(breakSeconds);
+        }
+
+        function tick() {
+            if (!isPaused && hasStarted) {
+                if (isWorking) {
+                    workSeconds++;
+                } else {
+                    breakSeconds++;
+                }
+                updateDisplay();
+            }
+        }
+
+        function startTimer() {
+            if (intervalId) clearInterval(intervalId);
+            intervalId = setInterval(tick, 1000);
+        }
+
+        // Event: Start Day
+        document.getElementById('start-btn').addEventListener('click', () => {
+            hasStarted = true;
+            startScreen.classList.add('hidden');
+            startTimer();
+            updateVisuals();
+        });
+
+        // Event: Switch Mode
+        switchBtn.addEventListener('click', () => {
+            if(!hasStarted) return;
+            if(isPaused) {
+                isPaused = false;
+                startTimer();
+                pauseBtn.textContent = "Pause";
+                pausedBadge.classList.remove('visible');
+            }
+            isWorking = !isWorking; 
+            updateVisuals();
+        });
+
+        // Event: Pause
+        pauseBtn.addEventListener('click', () => {
+            if(!hasStarted) return;
+            isPaused = !isPaused;
+            if (isPaused) {
+                pauseBtn.textContent = "Resume";
+                pausedBadge.classList.add('visible');
+                clearInterval(intervalId);
+            } else {
+                pauseBtn.textContent = "Pause";
+                pausedBadge.classList.remove('visible');
+                startTimer();
+            }
+        });
+
+        // Event: Reset
+        resetBtn.addEventListener('click', () => {
+            if(confirm("Reset counters to zero?")) {
+                workSeconds = 0;
+                breakSeconds = 0;
+                isPaused = false;
+                hasStarted = false;
+                isWorking = true;
+                clearInterval(intervalId);
+                updateDisplay();
+                startScreen.classList.remove('hidden');
+                pausedBadge.classList.remove('visible');
+                pauseBtn.textContent = "Pause";
+                updateVisuals();
+            }
+        });
+
+        // Visual Updates
+        function updateVisuals() {
+            if (isWorking) {
+                workBlock.classList.add('active');
+                breakBlock.classList.remove('active');
+                switchBtn.textContent = "Switch to Not Working";
+                switchBtn.style.backgroundColor = "#e67e22"; // Orange
+            } else {
+                breakBlock.classList.add('active');
+                workBlock.classList.remove('active');
+                switchBtn.textContent = "Switch to Working";
+                switchBtn.style.backgroundColor = "#2ecc71"; // Green
+            }
+        }
+    </script>
+</body>
+</html>
