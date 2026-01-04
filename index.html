@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Reality Check</title>
+    <title>Do The Thing</title>
     <style>
         :root {
             --bg-color: #f4f4f9;
@@ -39,6 +39,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            position: relative;
         }
 
         h1 {
@@ -49,6 +50,27 @@
             text-transform: uppercase;
             color: #333;
         }
+
+        /* Help Button */
+        .help-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #eee;
+            color: #666;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            padding: 0; /* Reset padding */
+        }
+        .help-btn:hover { background: #ddd; }
 
         /* Timer Display Area */
         .timers-wrapper {
@@ -122,12 +144,11 @@
             gap: 8px;
         }
 
-        /* The Dot */
         .status-dot {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background-color: #ccc; /* Default gray */
+            background-color: #ccc;
             transition: background-color 0.3s;
         }
 
@@ -145,7 +166,7 @@
             width: 100%;
         }
 
-        button {
+        button.main-action {
             border: none;
             padding: clamp(0.8rem, 2vh, 1.2rem);
             border-radius: 10px;
@@ -157,7 +178,7 @@
             font-family: 'Inter', sans-serif;
         }
 
-        button:active { transform: translateY(2px); }
+        button.main-action:active { transform: translateY(2px); }
 
         #switch-btn {
             color: white;
@@ -174,10 +195,17 @@
             flex: 1;
             background-color: #ececec;
             color: #666;
+            border: none;
+            padding: clamp(0.8rem, 2vh, 1.2rem);
+            border-radius: 10px;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            cursor: pointer;
+            font-weight: 600;
         }
         .secondary-btn:hover { background-color: #dedede; }
 
-        #start-screen {
+        /* Overlays (Start Screen & Help) */
+        .overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.98);
@@ -186,6 +214,10 @@
             justify-content: center;
             flex-direction: column;
             z-index: 10;
+            border-radius: 20px;
+            padding: 2rem;
+            box-sizing: border-box;
+            text-align: center;
         }
         
         #start-btn {
@@ -195,6 +227,26 @@
             padding: 1rem 3rem;
             font-size: 1.5rem;
             box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Help Screen Specifics */
+        .help-content h2 { margin-top: 0; color: #333; }
+        .help-content p { color: #666; line-height: 1.5; margin-bottom: 1.5rem; }
+        .help-content ul { text-align: left; color: #555; margin-bottom: 2rem; padding-left: 1.5rem; }
+        .help-content li { margin-bottom: 0.5rem; }
+
+        #close-help-btn {
+            background-color: #333;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         .hidden { display: none !important; }
@@ -217,12 +269,28 @@
 <body>
 
     <div class="container">
-        <div id="start-screen">
-            <h1>The Reality Check</h1>
+        <button id="help-toggle" class="help-btn">?</button>
+
+        <div id="help-screen" class="overlay hidden">
+            <div class="help-content">
+                <h2>The Philosophy</h2>
+                <p>This isn't just a timer. It's a reality check.</p>
+                <ul>
+                    <li><strong>Doing the Thing:</strong> Deep work. Focus. Execution.</li>
+                    <li><strong>Not Doing the Thing:</strong> Phone, email, bathroom, staring at the wall.</li>
+                </ul>
+                <p>Be brutally honest. Switch the clock the second you lose focus.</p>
+                <p><strong>Goal: Keep Efficiency above 75%.</strong></p>
+                <button id="close-help-btn">Got it</button>
+            </div>
+        </div>
+
+        <div id="start-screen" class="overlay">
+            <h1>Do The Thing</h1>
             <button id="start-btn">Start Day</button>
         </div>
 
-        <h1>The Reality Check</h1>
+        <h1>Do The Thing</h1>
 
         <div class="timers-wrapper">
             <div id="work-block" class="timer-block active">
@@ -245,7 +313,7 @@
         </div>
 
         <div class="controls">
-            <button id="switch-btn">Switch to Not Doing the Thing</button>
+            <button id="switch-btn" class="main-action">Switch to Not Doing the Thing</button>
             
             <div class="secondary-controls">
                 <button class="secondary-btn" id="pause-btn">Pause</button>
@@ -265,17 +333,14 @@
         let intervalId = null;
         let hasStarted = false;
 
-        // Load from Local Storage (Auto-Save Feature)
+        // Auto-Save Logic
         const savedDate = localStorage.getItem('rc_date');
         const today = new Date().toDateString();
 
         if (savedDate === today) {
-            // Only load data if it's from today
             if(localStorage.getItem('rc_work')) workSeconds = parseInt(localStorage.getItem('rc_work'));
             if(localStorage.getItem('rc_break')) breakSeconds = parseInt(localStorage.getItem('rc_break'));
-            // Note: We don't auto-start. User must click "Start" to resume.
         } else {
-            // New day, clear old data
             localStorage.clear();
             localStorage.setItem('rc_date', today);
         }
@@ -290,13 +355,14 @@
         const switchBtn = document.getElementById('switch-btn');
         const pauseBtn = document.getElementById('pause-btn');
         const startScreen = document.getElementById('start-screen');
+        const helpScreen = document.getElementById('help-screen');
         const pausedBadge = document.getElementById('paused-badge');
         const resetBtn = document.getElementById('reset-btn');
 
         // Config
-        const EFFICIENCY_GOAL = 75; // The Percentage Threshold
+        const EFFICIENCY_GOAL = 75;
 
-        // Format Time Helper (HH:MM:SS)
+        // Helpers
         function formatTime(totalSeconds) {
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -321,18 +387,15 @@
         function updateEfficiency() {
             const total = workSeconds + breakSeconds;
             let percentage = 100;
-            
             if (total > 0) {
                 percentage = Math.round((workSeconds / total) * 100);
             }
-
             efficiencyDisplay.textContent = percentage + "%";
 
-            // Update Dot Color
             if (percentage >= EFFICIENCY_GOAL) {
-                statusDot.style.backgroundColor = "var(--work-color)"; // Green
+                statusDot.style.backgroundColor = "var(--work-color)";
             } else {
-                statusDot.style.backgroundColor = "var(--danger-color)"; // Red
+                statusDot.style.backgroundColor = "var(--danger-color)";
             }
         }
 
@@ -344,7 +407,7 @@
                     breakSeconds++;
                 }
                 updateDisplay();
-                saveData(); // Auto-save on every tick
+                saveData();
             }
         }
 
@@ -353,18 +416,26 @@
             intervalId = setInterval(tick, 1000);
         }
 
-        // Event: Start Day
+        // Event Listeners
         document.getElementById('start-btn').addEventListener('click', () => {
             hasStarted = true;
             startScreen.classList.add('hidden');
-            // If we have saved data, update display immediately
             updateDisplay();
             startTimer();
             updateVisuals();
             updateEfficiency();
         });
 
-        // Event: Switch Mode
+        // Toggle Help
+        document.getElementById('help-toggle').addEventListener('click', () => {
+            helpScreen.classList.remove('hidden');
+        });
+
+        document.getElementById('close-help-btn').addEventListener('click', () => {
+            helpScreen.classList.add('hidden');
+        });
+
+        // Main Switch Logic
         switchBtn.addEventListener('click', () => {
             if(!hasStarted) return;
             if(isPaused) {
@@ -377,7 +448,7 @@
             updateVisuals();
         });
 
-        // Event: Pause
+        // Pause Logic
         pauseBtn.addEventListener('click', () => {
             if(!hasStarted) return;
             isPaused = !isPaused;
@@ -385,7 +456,7 @@
                 pauseBtn.textContent = "Resume";
                 pausedBadge.classList.add('visible');
                 clearInterval(intervalId);
-                saveData(); // Ensure save on pause
+                saveData();
             } else {
                 pauseBtn.textContent = "Pause";
                 pausedBadge.classList.remove('visible');
@@ -393,7 +464,7 @@
             }
         });
 
-        // Event: Reset
+        // Reset Logic
         resetBtn.addEventListener('click', () => {
             if(confirm("Reset counters to zero?")) {
                 workSeconds = 0;
@@ -402,11 +473,8 @@
                 hasStarted = false;
                 isWorking = true;
                 clearInterval(intervalId);
-                
-                // Clear Storage
                 localStorage.removeItem('rc_work');
                 localStorage.removeItem('rc_break');
-
                 updateDisplay();
                 startScreen.classList.remove('hidden');
                 pausedBadge.classList.remove('visible');
@@ -415,22 +483,21 @@
             }
         });
 
-        // Visual Updates
         function updateVisuals() {
             if (isWorking) {
                 workBlock.classList.add('active');
                 breakBlock.classList.remove('active');
                 switchBtn.textContent = "Switch to Not Doing the Thing";
-                switchBtn.style.backgroundColor = "#e67e22"; // Orange
+                switchBtn.style.backgroundColor = "#e67e22";
             } else {
                 breakBlock.classList.add('active');
                 workBlock.classList.remove('active');
                 switchBtn.textContent = "Switch to Doing the Thing";
-                switchBtn.style.backgroundColor = "#2ecc71"; // Green
+                switchBtn.style.backgroundColor = "#2ecc71";
             }
         }
         
-        // Initial display update for saved data
+        // Init
         updateDisplay();
 
     </script>
