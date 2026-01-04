@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Do The Thing</title>
+    <meta name="description" content="A simple, no-nonsense chess clock for work. Track 'Doing the Thing' vs 'Not Doing the Thing'. The best focus timer for ADHD and deep work.">
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 
@@ -22,7 +23,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
-            height: 100vh;
+            min-height: 100vh;
             width: 100vw;
             margin: 0;
             display: flex;
@@ -30,6 +31,7 @@
             align-items: center;
             justify-content: center;
             overflow-x: hidden;
+            padding-bottom: 2rem;
         }
 
         .container {
@@ -40,12 +42,23 @@
             text-align: center;
             width: 90%;
             max-width: 450px;
-            max-height: 95vh;
+            max-height: 90vh;
             overflow-y: auto;
             position: relative;
             display: flex;
             flex-direction: column;
+            margin-bottom: 2rem; 
         }
+
+        /* --- HELP BUTTON --- */
+        .help-btn { 
+            position: absolute; top: 15px; right: 15px; 
+            background: #f1f2f6; border: none; color: var(--text-secondary); 
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold; 
+            z-index: 10; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .help-btn:hover { background: #e1e2e6; color: var(--text-primary); }
 
         /* --- VIEWS --- */
         .view-section { display: none; width: 100%; height: 100%; }
@@ -62,6 +75,13 @@
             background: #2d3436; color: white; transition: 0.2s;
         }
         .auth-btn:hover { background: #000; }
+        
+        .guest-btn {
+            padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; border: 1px solid #dfe6e9;
+            background: transparent; color: var(--text-secondary); margin-top: 5px; transition: 0.2s;
+        }
+        .guest-btn:hover { background: #f1f2f6; color: var(--text-primary); }
+
         .switch-auth { font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; text-decoration: underline; margin-top: 10px; }
 
         /* --- HUD --- */
@@ -101,8 +121,16 @@
         #switch-btn.mode-break { background: var(--break-color); }
         
         .secondary-controls { display: flex; gap: 10px; margin-top: 10px; }
-        .sec-btn { flex: 1; background: #f1f2f6; border: none; color: var(--text-secondary); padding: 0.8rem; border-radius: 12px; cursor: pointer; font-weight: 600; }
+        
+        /* Fixed: Removed 'flex: 1' from base class so buttons don't stretch weirdly */
+        .sec-btn { 
+            background: #f1f2f6; border: none; color: var(--text-secondary); 
+            padding: 0.8rem; border-radius: 12px; cursor: pointer; font-weight: 600; 
+        }
         .sec-btn:hover { background: #e1e2e6; color: var(--text-primary); }
+
+        /* Only stretch secondary controls in the main row */
+        .secondary-controls .sec-btn { flex: 1; }
 
         /* --- HISTORY LIST --- */
         .history-list { list-style: none; padding: 0; margin-top: 1rem; max-height: 300px; overflow-y: auto; }
@@ -114,8 +142,8 @@
         .score-good { background: rgba(0, 184, 148, 0.1); color: var(--work-color); }
         .score-bad { background: rgba(225, 112, 85, 0.1); color: var(--break-color); }
 
-        /* --- OVERLAYS & NAV --- */
-        .nav-bar { display: flex; justify-content: space-between; width: 100%; margin-bottom: 1rem; }
+        /* --- NAV & OVERLAYS --- */
+        .nav-bar { display: flex; justify-content: space-between; width: 100%; margin-bottom: 1rem; padding-right: 30px; box-sizing: border-box; }
         .nav-link { font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; text-decoration: underline; }
         .streak-container { margin-top: 1rem; padding: 0.5rem; background: #f1f2f6; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
         .fire-icon { filter: grayscale(100%); }
@@ -123,7 +151,35 @@
         .streak-active .fire-icon { filter: grayscale(0%); }
         
         .loading-cover { position:absolute; top:0; left:0; width:100%; height:100%; background:white; z-index:999; display:flex; justify-content:center; align-items:center; }
+        
+        /* OVERLAYS (Help) */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100;
+            padding: 2rem; box-sizing: border-box;
+            text-align: center; border-radius: 24px;
+        }
         .hidden { display: none !important; }
+        
+        /* Guest History Teaser */
+        .guest-teaser { padding: 20px; background: #f8f9fa; border-radius: 16px; margin-top: 20px; }
+        .teaser-btn { background: var(--work-color); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        /* SEO TEXT (Bottom of page) */
+        .seo-text {
+            max-width: 600px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            text-align: left;
+            padding: 0 1.5rem;
+            font-size: 0.9rem;
+        }
+        .seo-text h2 { color: var(--text-primary); font-size: 1.1rem; margin-bottom: 1rem; margin-top: 0; }
+        .seo-text p { margin-bottom: 1.5rem; font-size: 0.9rem; }
+        
+        @media (max-height: 700px) { .seo-text { display: none; } }
 
     </style>
 </head>
@@ -131,7 +187,19 @@
 
     <div class="container">
         
+        <button id="help-toggle" class="help-btn">?</button>
+
         <div id="loading-screen" class="loading-cover">Loading...</div>
+
+        <div id="help-screen" class="overlay hidden">
+            <h2 style="color:#2d3436; margin-bottom:1rem">The Rules</h2>
+            <ul style="color:#636e72; text-align:left; line-height:1.8; margin-bottom:1rem; padding-left: 20px;">
+                <li>🎯 <strong>Doing the Thing:</strong> Deep Focus.</li>
+                <li>🛑 <strong>Not Doing:</strong> Phone, Email.</li>
+                <li>🔥 <strong>Streak:</strong> Maintain >75%.</li>
+            </ul>
+            <button class="sec-btn" id="close-help" style="background:#2d3436; color:white; padding: 0.8rem 2rem;">Got it</button>
+        </div>
 
         <div id="view-auth" class="view-section">
             <h1 style="margin-bottom:0.5rem">Do The Thing</h1>
@@ -143,6 +211,12 @@
                 <button id="auth-main-btn" class="auth-btn">Log In</button>
                 <div id="auth-error" style="color:red; font-size:0.8rem;"></div>
                 <div id="auth-toggle" class="switch-auth">Need an account? Sign Up</div>
+                
+                <div style="display:flex; align-items:center; gap:10px; margin: 10px 0; color:#ccc;">
+                    <div style="flex:1; height:1px; background:#eee;"></div> OR <div style="flex:1; height:1px; background:#eee;"></div>
+                </div>
+                
+                <button id="btn-guest" class="guest-btn">Continue as Guest</button>
             </div>
         </div>
 
@@ -192,11 +266,35 @@
                 <h3>History</h3>
                 <div class="nav-link" id="btn-close-history" style="font-size:1rem; padding:10px;">✕ Close</div>
             </div>
-            <ul id="history-list" class="history-list">
-                <li style="color:#aaa; font-size:0.9rem;">Loading history...</li>
-            </ul>
+            
+            <div id="history-content">
+                <ul id="history-list" class="history-list">
+                    <li style="color:#aaa; font-size:0.9rem;">Loading history...</li>
+                </ul>
+            </div>
+
+            <div id="guest-history-msg" class="guest-teaser hidden">
+                <div style="font-size:3rem; margin-bottom:10px;">🔒</div>
+                <h3>Track your progress</h3>
+                <p style="color:#666; font-size:0.9rem;">Create a free account to view your daily history and stats over time.</p>
+                <button id="btn-guest-signup" class="teaser-btn">Create Account</button>
+            </div>
         </div>
 
+    </div>
+
+    <div class="seo-text">
+        <h2>The Honest Productivity Timer for Deep Work</h2>
+        <p>
+            Most productivity timers are too complicated. <strong>Do The Thing</strong> acts like a chess clock for your workday. 
+            It forces you to be honest about how you spend your time.
+        </p>
+        <p>
+            Whether you are managing ADHD, trying to improve your focus, or just want to 
+            audit your daily efficiency, this tool gives you immediate feedback. 
+            Simply click the switch when you stop "Doing the Thing" (working) and click it 
+            back when you return to focus.
+        </p>
     </div>
 
     <script type="module">
@@ -204,7 +302,7 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // --- YOUR KEYS ---
+        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyA2ysrcWSmiiUIrIRHl8JGdYeSfrPLqpUg",
             authDomain: "dothething-babad.firebaseapp.com",
@@ -221,10 +319,11 @@
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-        } catch(e) { console.error("Firebase not configured", e); }
+        } catch(e) { console.error("Firebase error", e); }
 
         // --- STATE ---
         let user = null;
+        let isGuest = false;
         let workSec = 0, breakSec = 0;
         let isWorking = true, isPaused = false;
         let interval = null;
@@ -240,26 +339,46 @@
             effDisplay: document.getElementById('eff-display'), circle: document.getElementById('progress-circle'),
             switchBtn: document.getElementById('switch-btn'), workCard: document.getElementById('work-card'),
             breakCard: document.getElementById('break-card'), streakBadge: document.getElementById('streak-badge'),
-            pauseBtn: document.getElementById('pause-btn'), historyList: document.getElementById('history-list')
+            pauseBtn: document.getElementById('pause-btn'), historyList: document.getElementById('history-list'),
+            btnGuest: document.getElementById('btn-guest'), btnLogout: document.getElementById('btn-logout'),
+            historyContent: document.getElementById('history-content'), guestMsg: document.getElementById('guest-history-msg'),
+            guestSignupBtn: document.getElementById('btn-guest-signup'), helpToggle: document.getElementById('help-toggle'),
+            helpScreen: document.getElementById('help-screen'), closeHelp: document.getElementById('close-help')
         };
 
-        // --- AUTH LOGIC ---
+        // --- AUTH & ROUTING ---
         function showView(name) {
             el.loading.classList.add('hidden');
             Object.values(views).forEach(v => v.classList.remove('active'));
             views[name].classList.add('active');
         }
 
+        // Auth Listener
         onAuthStateChanged(auth, (u) => {
             if (u) {
                 user = u;
+                isGuest = false;
+                el.btnLogout.textContent = "Log Out";
                 showView('app');
-                loadToday();
+                loadData();
                 interval = setInterval(tick, 1000);
             } else {
                 user = null;
-                showView('auth');
+                // Only show auth screen if we aren't in guest mode
+                if (!isGuest) {
+                    showView('auth');
+                    if (interval) clearInterval(interval);
+                }
             }
+        });
+
+        // Guest Mode Trigger
+        el.btnGuest.addEventListener('click', () => {
+            isGuest = true;
+            el.btnLogout.textContent = "Log In / Sign Up";
+            showView('app');
+            loadData();
+            interval = setInterval(tick, 1000);
         });
 
         el.authToggle.addEventListener('click', () => {
@@ -280,68 +399,120 @@
             }
         });
 
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            clearInterval(interval);
-            signOut(auth);
+        // Logout / Exit Guest Mode
+        el.btnLogout.addEventListener('click', () => {
+            if (interval) clearInterval(interval);
+            if (isGuest) {
+                isGuest = false;
+                showView('auth');
+            } else {
+                signOut(auth);
+            }
         });
 
-        // --- DATABASE LOGIC ---
+        el.guestSignupBtn.addEventListener('click', () => {
+             isGuest = false;
+             showView('auth');
+             isSignUp = true;
+             el.authBtn.textContent = "Sign Up";
+             el.authToggle.textContent = "Have an account? Log In";
+        });
+
+        // --- HELP OVERLAY ---
+        el.helpToggle.addEventListener('click', () => el.helpScreen.classList.remove('hidden'));
+        el.closeHelp.addEventListener('click', () => el.helpScreen.classList.add('hidden'));
+
+        // --- DATA MANAGEMENT (DUAL STORAGE) ---
         const getTodayKey = () => new Date().toISOString().split('T')[0];
 
-        async function loadToday() {
-            if (!user) return;
-            const ref = doc(db, "users", user.uid, "days", getTodayKey());
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                const d = snap.data();
-                workSec = d.work || 0;
-                breakSec = d.break || 0;
-                isWorking = d.isWorking !== undefined ? d.isWorking : true; // Restore state
+        async function loadData() {
+            isPaused = true; // Always load paused
+            
+            if (isGuest) {
+                // Local Storage for Guests
+                const storedDate = localStorage.getItem('dtt_date');
+                if (storedDate === getTodayKey()) {
+                    workSec = parseInt(localStorage.getItem('dtt_work') || 0);
+                    breakSec = parseInt(localStorage.getItem('dtt_break') || 0);
+                    const savedWorking = localStorage.getItem('dtt_isWorking');
+                    if(savedWorking !== null) isWorking = (savedWorking === 'true');
+                } else {
+                    // New day for guest
+                    workSec = 0; breakSec = 0;
+                    localStorage.setItem('dtt_date', getTodayKey());
+                }
             } else {
-                workSec = 0; breakSec = 0;
+                // Firebase for Users
+                if (!user) return;
+                const ref = doc(db, "users", user.uid, "days", getTodayKey());
+                const snap = await getDoc(ref);
+                if (snap.exists()) {
+                    const d = snap.data();
+                    workSec = d.work || 0;
+                    breakSec = d.break || 0;
+                    isWorking = d.isWorking !== undefined ? d.isWorking : true;
+                } else {
+                    workSec = 0; breakSec = 0;
+                }
             }
-            isPaused = true; // Always start paused on load to avoid accidents
             updateUI();
-            toggleVisuals(); // Ensure visuals match restored state
+            toggleVisuals();
         }
 
-        async function saveDB() {
-            if (!user) return;
-            const ref = doc(db, "users", user.uid, "days", getTodayKey());
+        async function saveData() {
             const total = workSec + breakSec;
             const eff = total === 0 ? 100 : Math.round((workSec / total) * 100);
-            await setDoc(ref, {
-                date: new Date(),
-                work: workSec,
-                break: breakSec,
-                efficiency: eff,
-                isWorking: isWorking
-            }, { merge: true });
+
+            if (isGuest) {
+                localStorage.setItem('dtt_work', workSec);
+                localStorage.setItem('dtt_break', breakSec);
+                localStorage.setItem('dtt_date', getTodayKey());
+                localStorage.setItem('dtt_isWorking', isWorking);
+            } else {
+                if (!user) return;
+                const ref = doc(db, "users", user.uid, "days", getTodayKey());
+                await setDoc(ref, {
+                    date: new Date(),
+                    work: workSec,
+                    break: breakSec,
+                    efficiency: eff,
+                    isWorking: isWorking
+                }, { merge: true });
+            }
         }
 
         // --- HISTORY LOGIC ---
         document.getElementById('btn-history').addEventListener('click', async () => {
             showView('history');
-            el.historyList.innerHTML = "<li>Loading...</li>";
-            const q = query(collection(db, "users", user.uid, "days"), orderBy("date", "desc"));
-            const snaps = await getDocs(q);
-            el.historyList.innerHTML = "";
             
-            snaps.forEach(doc => {
-                const d = doc.data();
-                const dateStr = new Date(d.date.seconds * 1000).toLocaleDateString();
-                const totalMin = Math.round((d.work + d.break) / 60);
-                const scoreClass = d.efficiency >= 75 ? "score-good" : "score-bad";
+            if (isGuest) {
+                el.historyContent.classList.add('hidden');
+                el.guestMsg.classList.remove('hidden');
+            } else {
+                el.guestMsg.classList.add('hidden');
+                el.historyContent.classList.remove('hidden');
                 
-                const li = document.createElement('li');
-                li.className = "history-item";
-                li.innerHTML = `
-                    <span>${dateStr} <span style="color:#ccc">|</span> ${totalMin}m tracked</span>
-                    <span class="hist-score ${scoreClass}">${d.efficiency}%</span>
-                `;
-                el.historyList.appendChild(li);
-            });
-            if(snaps.empty) el.historyList.innerHTML = "<li>No history yet.</li>";
+                el.historyList.innerHTML = "<li>Loading...</li>";
+                const q = query(collection(db, "users", user.uid, "days"), orderBy("date", "desc"));
+                const snaps = await getDocs(q);
+                el.historyList.innerHTML = "";
+                
+                snaps.forEach(doc => {
+                    const d = doc.data();
+                    const dateStr = new Date(d.date.seconds * 1000).toLocaleDateString();
+                    const totalMin = Math.round((d.work + d.break) / 60);
+                    const scoreClass = d.efficiency >= 75 ? "score-good" : "score-bad";
+                    
+                    const li = document.createElement('li');
+                    li.className = "history-item";
+                    li.innerHTML = `
+                        <span>${dateStr} <span style="color:#ccc">|</span> ${totalMin}m tracked</span>
+                        <span class="hist-score ${scoreClass}">${d.efficiency}%</span>
+                    `;
+                    el.historyList.appendChild(li);
+                });
+                if(snaps.empty) el.historyList.innerHTML = "<li>No history yet.</li>";
+            }
         });
 
         document.getElementById('btn-close-history').addEventListener('click', () => showView('app'));
@@ -387,7 +558,6 @@
                 el.workCard.classList.remove('active', 'pulse-green');
             }
             
-            // Handle Pause State Visuals
             if(isPaused) {
                 el.pauseBtn.innerText = "Resume";
                 el.workCard.classList.remove('pulse-green');
@@ -401,33 +571,29 @@
             if(!isPaused) {
                 if(isWorking) workSec++; else breakSec++;
                 updateUI();
-                // Save occasionally (every 10s) to prevent data loss on crash, 
-                // but not every second to save database writes
-                if((workSec + breakSec) % 10 === 0) saveDB();
+                // Save periodically (every 10s)
+                if((workSec + breakSec) % 10 === 0) saveData();
             }
         }
 
         el.switchBtn.addEventListener('click', () => {
-            // Unpause if paused
-            if(isPaused) {
-                isPaused = false;
-            }
+            if(isPaused) isPaused = false;
             isWorking = !isWorking;
             toggleVisuals();
-            saveDB(); 
+            saveData(); 
         });
 
         el.pauseBtn.addEventListener('click', () => {
             isPaused = !isPaused;
             toggleVisuals();
-            saveDB();
+            saveData();
         });
 
         document.getElementById('reset-btn').addEventListener('click', () => {
             if(confirm("Reset today's stats?")) {
                 workSec = 0; breakSec = 0;
                 isPaused = true;
-                saveDB();
+                saveData();
                 updateUI();
                 toggleVisuals();
             }
