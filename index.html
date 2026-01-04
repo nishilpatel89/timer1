@@ -256,7 +256,7 @@
         <h2 style="color:#2d3436; margin-bottom:1rem">The Rules</h2>
         <ul style="color:#636e72; text-align:left; line-height:1.8; margin-bottom:1rem; padding-left: 20px;">
             <li>🎯 <strong>Doing the Thing:</strong> Deep Focus.</li>
-            <li>🛑 <strong>Not Doing:</strong> Phone, Email.</li>
+            <li>🛑 <strong>Not Doing the Thing:</strong> Phone, Email.</li>
             <li>🔥 <strong>Streak:</strong> Maintain >75%.</li>
         </ul>
         <button class="sec-btn" id="close-help">Got it</button>
@@ -287,7 +287,7 @@
                 <div class="timer-val" id="work-time">00:00:00</div>
             </div>
             <div id="break-card" class="timer-card">
-                <div class="timer-title">Not Doing</div>
+                <div class="timer-title">Not Doing the Thing</div>
                 <div class="timer-val" id="break-time">00:00:00</div>
             </div>
         </div>
@@ -298,7 +298,7 @@
         </div>
 
         <div style="margin-top: clamp(1rem, 3vh, 2rem);">
-            <button id="switch-btn" class="mode-work">Switch to Not Doing</button>
+            <button id="switch-btn" class="mode-work">Switch to Not Doing the Thing</button>
             
             <div class="secondary-controls">
                 <button class="sec-btn" id="pause-btn">Pause</button>
@@ -409,7 +409,7 @@
             isWorking = !isWorking;
             // Visual Swap
             if(isWorking) {
-                el.switchBtn.innerText = "Switch to Not Doing";
+                el.switchBtn.innerText = "Switch to Not Doing the Thing";
                 el.switchBtn.className = "mode-work"; // Green button
                 el.workCard.classList.add('active', 'pulse-green');
                 el.breakCard.classList.remove('active', 'pulse-orange');
@@ -480,3 +480,4 @@
     </script>
 </body>
 </html>
+
