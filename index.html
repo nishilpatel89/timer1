@@ -3,462 +3,480 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Do The Thing | The Honest Productivity Timer</title>
-    <meta name="description" content="A simple, no-nonsense chess clock for work. Track 'Doing the Thing' vs 'Not Doing the Thing'. The best focus timer for ADHD and deep work.">
-    <meta name="keywords" content="productivity timer, chess clock for work, adhd timer, deep work tracker, focus tool, simple time tracker">
-    <meta name="author" content="Do The Thing">
+    <title>Do The Thing</title>
+    <meta name="description" content="A simple, no-nonsense chess clock for work. Track 'Doing the Thing' vs 'Not Doing the Thing'.">
     
-    <meta property="og:title" content="Do The Thing - Stop Lying to Yourself">
-    <meta property="og:description" content="Track your actual efficiency. A brutal reality check for your workday.">
-    <meta property="og:url" content="https://dothething.io">
-    <meta property="og:type" content="website">
-    
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 
     <style>
         :root {
-            --bg-color: #f4f4f9;
-            --text-color: #333;
-            --work-color: #2ecc71;
-            --break-color: #e67e22;
-            --danger-color: #e74c3c;
-            --inactive-opacity: 0.25;
+            /* Clean Light Theme */
+            --bg-color: #f0f2f5;
             --card-bg: #ffffff;
+            --text-primary: #2d3436;
+            --text-secondary: #636e72;
+            
+            /* Action Colors */
+            --work-color: #00b894; /* Mint Green */
+            --break-color: #e17055; /* Terracotta Orange */
+            --ring-bg: #dfe6e9;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-primary);
+            height: 100vh;
+            width: 100vw;
             margin: 0;
-            /* Changed from fixed height to min-height to allow scrolling for SEO text */
-            min-height: 100vh; 
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        /* Semantic Main Container */
-        main {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            width: 100%;
+            justify-content: center; /* Centers vertical widget */
+            overflow-x: hidden;
         }
 
         .container {
             background: var(--card-bg);
-            padding: clamp(1rem, 3vw, 3rem); 
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            /* Fluid padding: scales down on small windows */
+            padding: clamp(1rem, 3vmin, 2.5rem); 
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.03);
             text-align: center;
             width: 90%;
-            max-width: 600px;
-            position: relative;
-            margin: 2rem 0;
-        }
-
-        /* SEO Content Section (Below the fold) */
-        .seo-content {
-            max-width: 700px;
-            padding: 2rem;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 3rem;
-        }
-        .seo-content h2 { color: #333; font-size: 1.2rem; margin-top: 2rem; }
-        .seo-content p { font-size: 0.95rem; }
-
-        h1 {
-            font-weight: 800;
-            font-size: clamp(1rem, 4vw, 1.8rem);
-            margin: 0 0 clamp(1rem, 3vw, 2rem) 0;
-            letter-spacing: -0.5px;
-            text-transform: uppercase;
-            color: #333;
-        }
-
-        /* Help Button */
-        .help-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #eee;
-            color: #666;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            padding: 0; 
-        }
-        .help-btn:hover { background: #ddd; }
-
-        /* Timer Display Area */
-        .timers-wrapper {
+            max-width: 450px; /* Slightly tighter max width */
+            
+            /* Ensure it fits in small vertical windows */
+            max-height: 95vh;
+            overflow-y: auto; /* Allow internal scroll if REALLY tiny */
+            
             display: flex;
             flex-direction: column;
-            gap: clamp(0.5rem, 2vh, 1.5rem);
-            margin-bottom: clamp(1rem, 3vh, 1.5rem);
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-sizing: border-box;
         }
 
-        .timer-block {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            opacity: var(--inactive-opacity);
-            transform: scale(0.98);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 1rem;
-            border-radius: 12px;
-        }
-
-        .timer-block.active {
-            opacity: 1;
-            transform: scale(1);
-            background-color: rgba(0,0,0,0.03);
-        }
-
-        .timer-label {
-            font-size: clamp(0.7rem, 2.5vw, 1rem);
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-align: left;
-            flex: 1;
-        }
-
-        .time-display {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: clamp(1.8rem, 11vw, 4.5rem); 
-            line-height: 1;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-            text-align: right;
-        }
-
-        /* Stats */
-        .stats-block {
+        /* --- THE HUD (Ring) --- */
+        .hud-wrapper {
+            position: relative;
+            /* Key Change: Ring size based on Viewport Min (vmin) so it shrinks */
+            width: clamp(150px, 35vmin, 220px);
+            height: clamp(150px, 35vmin, 220px);
+            margin: 0 auto clamp(1rem, 3vh, 2rem) auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: clamp(1rem, 3vh, 1.5rem);
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 12px;
+        }
+
+        /* SVG Scales to wrapper */
+        .progress-ring { 
+            transform: rotate(-90deg); 
+            transform-origin: 50% 50%;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .progress-ring__circle { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
+
+        .hud-stats { position: absolute; display: flex; flex-direction: column; align-items: center; }
+        .efficiency-big {
+            font-size: clamp(2rem, 8vmin, 3.5rem); /* Fluid Font */
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -2px;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+        .efficiency-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* --- TIMERS --- */
+        .timers-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: clamp(1rem, 3vh, 2rem);
             gap: 10px;
         }
 
-        .stats-label { font-size: 0.9rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        .stats-value { font-size: 1.5rem; font-weight: 800; font-family: 'Courier New', monospace; display: flex; align-items: center; gap: 8px; }
-        .status-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #ccc; transition: background-color 0.3s; }
-
-        /* Color States */
-        .timer-block#work-block.active .time-display { color: var(--work-color); }
-        .timer-block#work-block.active .timer-label { color: var(--work-color); }
-        .timer-block#break-block.active .time-display { color: var(--break-color); }
-        .timer-block#break-block.active .timer-label { color: var(--break-color); }
-
-        /* Controls */
-        .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        
-        button.main-action {
-            border: none; padding: clamp(0.8rem, 2vh, 1.2rem); border-radius: 10px;
-            font-size: clamp(0.9rem, 3vw, 1.1rem); cursor: pointer; transition: filter 0.2s, transform 0.1s;
-            font-weight: 600; width: 100%; font-family: 'Inter', sans-serif;
+        .timer-card {
+            flex: 1;
+            background: #f8f9fa;
+            padding: clamp(0.5rem, 2vh, 1rem);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            opacity: 0.5;
+            transform: scale(0.98);
         }
-        button.main-action:active { transform: translateY(2px); }
 
-        #switch-btn { color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.15); font-size: clamp(1rem, 3.5vw, 1.3rem); }
-        
-        .secondary-controls { display: flex; gap: 10px; }
-        .secondary-btn {
-            flex: 1; background-color: #ececec; color: #666; border: none;
-            padding: clamp(0.8rem, 2vh, 1.2rem); border-radius: 10px;
-            font-size: clamp(0.9rem, 3vw, 1.1rem); cursor: pointer; font-weight: 600;
+        .timer-card.active {
+            opacity: 1;
+            transform: scale(1.02);
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
-        .secondary-btn:hover { background-color: #dedede; }
 
-        /* Overlays */
+        .timer-card.active.pulse-green { border-color: var(--work-color); animation: soft-pulse-green 3s infinite ease-in-out; }
+        .timer-card.active.pulse-orange { border-color: var(--break-color); }
+
+        @keyframes soft-pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.2); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 184, 148, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 184, 148, 0); }
+        }
+
+        .timer-val {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(1.2rem, 5vmin, 1.6rem);
+            font-weight: 700;
+            margin-top: 2px;
+            color: var(--text-primary);
+        }
+        .timer-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+
+        /* --- BIG SWITCH BUTTON --- */
+        #switch-btn {
+            background: #2d3436;
+            color: white;
+            width: 100%;
+            padding: clamp(0.8rem, 2.5vh, 1.2rem);
+            border-radius: 16px;
+            font-size: clamp(0.9rem, 3vmin, 1.1rem);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #switch-btn:active { transform: scale(0.98); }
+
+        #switch-btn.mode-work { background: var(--work-color); box-shadow: 0 8px 20px rgba(0, 184, 148, 0.3); }
+        #switch-btn.mode-break { background: var(--break-color); box-shadow: 0 8px 20px rgba(225, 112, 85, 0.3); }
+
+        /* --- STREAK BADGE --- */
+        .streak-container {
+            margin-top: clamp(0.5rem, 2vh, 1.5rem);
+            padding: 0.5rem 1rem;
+            background: #f1f2f6;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .fire-icon { font-size: 1.1rem; filter: grayscale(100%); transition: 0.3s; }
+        .streak-active .fire-icon { filter: grayscale(0%); transform: scale(1.1); }
+        .streak-active { background: rgba(0, 184, 148, 0.1); color: #009476; }
+
+        /* Secondary Controls */
+        .secondary-controls { display: flex; gap: 10px; width: 100%; }
+        
+        .sec-btn {
+            background: #f1f2f6; 
+            border: none; 
+            color: var(--text-secondary);
+            padding: clamp(0.6rem, 2vh, 0.8rem); 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            transition: 0.2s;
+            flex: 1; /* Stretch horizontally */
+        }
+        
+        .sec-btn:hover { background: #e1e2e6; color: var(--text-primary); }
+
+        /* --- OVERLAYS --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.98); display: flex; align-items: center; justify-content: center;
-            flex-direction: column; z-index: 100; padding: 2rem; box-sizing: border-box; text-align: center;
+            background: rgba(255, 255, 255, 0.98);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100;
+            padding: 2rem;
+            box-sizing: border-box;
+            text-align: center;
         }
-        
-        #start-btn {
-            background-color: var(--work-color); color: white; width: auto; padding: 1rem 3rem;
-            font-size: 1.5rem; box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
-            border-radius: 12px; border: none; cursor: pointer; font-weight: bold;
+        .start-btn {
+            background: var(--work-color); color: white; border: none; padding: 1rem 3rem;
+            font-size: 1.5rem; font-weight: 700; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 184, 148, 0.3); transition: transform 0.2s;
         }
-
-        .help-content h2 { margin-top: 0; color: #333; }
-        .help-content p { color: #666; line-height: 1.5; margin-bottom: 1.5rem; }
-        .help-content ul { text-align: left; color: #555; margin-bottom: 2rem; padding-left: 1.5rem; }
-        #close-help-btn { background-color: #333; color: white; padding: 0.8rem 2rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
-
+        .start-btn:hover { transform: scale(1.05); }
         .hidden { display: none !important; }
 
-        .paused-badge {
-            margin-top: 10px; color: #e74c3c; font-weight: 800; font-size: 0.75rem;
-            letter-spacing: 2px; text-transform: uppercase; opacity: 0; height: 1rem; transition: opacity 0.3s;
+        /* Help Button Specifics */
+        #close-help {
+            flex: 0 0 auto; /* Don't stretch */
+            width: auto;
+            min-width: 120px;
+            background: var(--text-primary);
+            color: white;
+            margin-top: 1rem;
         }
-        .paused-badge.visible { opacity: 1; }
+        #close-help:hover { background: #000; }
+
+        /* Help Toggle (Top Right) */
+        .help-btn { 
+            position: absolute; top: 15px; right: 15px; 
+            background: #f1f2f6; border: none; color: var(--text-secondary); 
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; 
+            z-index: 10;
+        }
+        .help-btn:hover { background: #e1e2e6; }
+
+        /* SEO Text: Only visible if window is tall enough */
+        .seo-text {
+            max-width: 600px;
+            margin: 2rem auto;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            text-align: left;
+            padding: 0 1.5rem;
+            font-size: 0.9rem;
+        }
+        /* Hide SEO text on widget mode (short windows) */
+        @media (max-height: 700px) {
+            .seo-text { display: none; }
+            body { justify-content: center; padding-bottom: 0; }
+            .container { margin-top: 0; }
+        }
 
     </style>
 </head>
 <body>
 
-    <main>
-        <div class="container">
-            <button id="help-toggle" class="help-btn" aria-label="Help and Instructions">?</button>
+    <div id="help-screen" class="overlay hidden">
+        <h2 style="color:#2d3436; margin-bottom:1rem">The Rules</h2>
+        <ul style="color:#636e72; text-align:left; line-height:1.8; margin-bottom:1rem; padding-left: 20px;">
+            <li>🎯 <strong>Doing the Thing:</strong> Deep Focus.</li>
+            <li>🛑 <strong>Not Doing:</strong> Phone, Email.</li>
+            <li>🔥 <strong>Streak:</strong> Maintain >75%.</li>
+        </ul>
+        <button class="sec-btn" id="close-help">Got it</button>
+    </div>
 
-            <div id="help-screen" class="overlay hidden">
-                <div class="help-content">
-                    <h2>The Philosophy</h2>
-                    <p>This isn't just a timer. It's a reality check.</p>
-                    <ul>
-                        <li><strong>Doing the Thing:</strong> Deep work. Focus. Execution.</li>
-                        <li><strong>Not Doing the Thing:</strong> Phone, email, bathroom, staring at the wall.</li>
-                    </ul>
-                    <p>Be brutally honest. Switch the clock the second you lose focus.</p>
-                    <p><strong>Goal: Keep Efficiency above 75%.</strong></p>
-                    <button id="close-help-btn">Got it</button>
-                </div>
+    <div id="start-screen" class="overlay">
+        <h1 style="color:#2d3436; font-size: clamp(2rem, 5vw, 2.5rem); margin-bottom:2rem; text-transform:uppercase; letter-spacing:1px; font-weight:800;">Do The Thing</h1>
+        <button class="start-btn" id="start-btn">Start Day</button>
+    </div>
+
+    <div class="container">
+        <button class="help-btn" id="help-toggle" aria-label="Help">?</button>
+
+        <div class="hud-wrapper">
+            <svg class="progress-ring" viewBox="0 0 220 220">
+                <circle class="progress-ring__bg" stroke="#dfe6e9" stroke-width="12" fill="transparent" r="90" cx="110" cy="110"/>
+                <circle class="progress-ring__circle" id="progress-circle" stroke="#00b894" stroke-width="12" stroke-linecap="round" fill="transparent" r="90" cx="110" cy="110"/>
+            </svg>
+            <div class="hud-stats">
+                <span class="efficiency-big" id="eff-display">100%</span>
+                <span class="efficiency-label">Efficiency</span>
             </div>
-
-            <div id="start-screen" class="overlay">
-                <h1>Do The Thing</h1>
-                <button id="start-btn">Start Day</button>
-            </div>
-
-            <h1>Do The Thing</h1>
-
-            <div class="timers-wrapper">
-                <div id="work-block" class="timer-block active">
-                    <div class="timer-label">Doing the Thing</div>
-                    <div class="time-display" id="work-time">00:00:00</div>
-                </div>
-
-                <div id="break-block" class="timer-block">
-                    <div class="timer-label">Not Doing the Thing</div>
-                    <div class="time-display" id="break-time">00:00:00</div>
-                </div>
-            </div>
-
-            <div class="stats-block">
-                <span class="stats-label">Efficiency:</span>
-                <div class="stats-value">
-                    <div id="status-dot" class="status-dot"></div>
-                    <span id="efficiency-display">100%</span>
-                </div>
-            </div>
-
-            <div class="controls">
-                <button id="switch-btn" class="main-action">Switch to Not Doing the Thing</button>
-                
-                <div class="secondary-controls">
-                    <button class="secondary-btn" id="pause-btn">Pause</button>
-                    <button class="secondary-btn" id="reset-btn">Reset</button>
-                </div>
-            </div>
-            
-            <div class="paused-badge" id="paused-badge">Timer Paused</div>
         </div>
 
-        <section class="seo-content">
-            <h2>The Honest Productivity Timer for Deep Work</h2>
-            <p>
-                Most productivity timers are too complicated. <strong>Do The Thing</strong> is a simple 
-                productivity tracker that acts like a chess clock for your workday. 
-                It forces you to be honest about how you spend your time.
-            </p>
-            <p>
-                Whether you are managing ADHD, trying to improve your focus, or just want to 
-                audit your daily efficiency, this tool gives you immediate feedback. 
-                Simply click the switch when you stop "Doing the Thing" (working) and click it 
-                back when you return to focus.
-            </p>
-        </section>
-    </main>
+        <div class="timers-row">
+            <div id="work-card" class="timer-card active pulse-green">
+                <div class="timer-title">Doing the Thing</div>
+                <div class="timer-val" id="work-time">00:00:00</div>
+            </div>
+            <div id="break-card" class="timer-card">
+                <div class="timer-title">Not Doing</div>
+                <div class="timer-val" id="break-time">00:00:00</div>
+            </div>
+        </div>
+
+        <div id="streak-badge" class="streak-container">
+            <span class="fire-icon">🔥</span>
+            <span id="streak-text">Focus Zone Active</span>
+        </div>
+
+        <div style="margin-top: clamp(1rem, 3vh, 2rem);">
+            <button id="switch-btn" class="mode-work">Switch to Not Doing</button>
+            
+            <div class="secondary-controls">
+                <button class="sec-btn" id="pause-btn">Pause</button>
+                <button class="sec-btn" id="reset-btn">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="seo-text">
+        <h2>The Honest Productivity Timer for Deep Work</h2>
+        <p>
+            Most productivity timers are too complicated. <strong>Do The Thing</strong> acts like a chess clock for your workday. 
+            It forces you to be honest about how you spend your time.
+        </p>
+        <p>
+            Whether you are managing ADHD, trying to improve your focus, or just want to 
+            audit your daily efficiency, this tool gives you immediate feedback. 
+        </p>
+    </div>
 
     <script>
-        // State Variables
-        let workSeconds = 0;
-        let breakSeconds = 0;
-        let isWorking = true; 
-        let isPaused = false;
-        let intervalId = null;
-        let hasStarted = false;
+        // --- CONFIG & STATE ---
+        const GOAL = 75;
+        let workSec = 0, breakSec = 0;
+        let isWorking = true, isPaused = false, hasStarted = false;
+        let interval = null;
 
-        // Auto-Save Logic
-        const savedDate = localStorage.getItem('rc_date');
-        const today = new Date().toDateString();
+        // --- DOM ELEMENTS ---
+        const el = {
+            workTime: document.getElementById('work-time'),
+            breakTime: document.getElementById('break-time'),
+            effDisplay: document.getElementById('eff-display'),
+            circle: document.getElementById('progress-circle'),
+            switchBtn: document.getElementById('switch-btn'),
+            workCard: document.getElementById('work-card'),
+            breakCard: document.getElementById('break-card'),
+            streakBadge: document.getElementById('streak-badge'),
+            pauseBtn: document.getElementById('pause-btn')
+        };
 
-        if (savedDate === today) {
-            if(localStorage.getItem('rc_work')) workSeconds = parseInt(localStorage.getItem('rc_work'));
-            if(localStorage.getItem('rc_break')) breakSeconds = parseInt(localStorage.getItem('rc_break'));
-        } else {
-            localStorage.clear();
-            localStorage.setItem('rc_date', today);
-        }
+        // --- CIRCLE LOGIC ---
+        // We use viewBox="0 0 220 220", so the radius is always 90 relative to that unit
+        const radius = 90;
+        const circumference = radius * 2 * Math.PI;
+        el.circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        el.circle.style.strokeDashoffset = 0; // Start full
 
-        // DOM Elements
-        const workDisplay = document.getElementById('work-time');
-        const breakDisplay = document.getElementById('break-time');
-        const efficiencyDisplay = document.getElementById('efficiency-display');
-        const statusDot = document.getElementById('status-dot');
-        const workBlock = document.getElementById('work-block');
-        const breakBlock = document.getElementById('break-block');
-        const switchBtn = document.getElementById('switch-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        const startScreen = document.getElementById('start-screen');
-        const helpScreen = document.getElementById('help-screen');
-        const pausedBadge = document.getElementById('paused-badge');
-        const resetBtn = document.getElementById('reset-btn');
-
-        // Config
-        const EFFICIENCY_GOAL = 75;
-
-        // Helpers
-        function formatTime(totalSeconds) {
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            return [hours, minutes, seconds]
-                .map(v => v < 10 ? "0" + v : v)
-                .join(":");
-        }
-
-        function saveData() {
-            localStorage.setItem('rc_work', workSeconds);
-            localStorage.setItem('rc_break', breakSeconds);
-            localStorage.setItem('rc_date', new Date().toDateString());
-        }
-
-        function updateDisplay() {
-            workDisplay.textContent = formatTime(workSeconds);
-            breakDisplay.textContent = formatTime(breakSeconds);
-            updateEfficiency();
-        }
-
-        function updateEfficiency() {
-            const total = workSeconds + breakSeconds;
-            let percentage = 100;
-            if (total > 0) {
-                percentage = Math.round((workSeconds / total) * 100);
-            }
-            efficiencyDisplay.textContent = percentage + "%";
-
-            if (percentage >= EFFICIENCY_GOAL) {
-                statusDot.style.backgroundColor = "var(--work-color)";
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            el.circle.style.strokeDashoffset = offset;
+            
+            // Color Logic
+            if(percent >= GOAL) {
+                el.circle.style.stroke = "var(--work-color)";
+                el.effDisplay.style.color = "var(--text-primary)";
+                el.streakBadge.classList.add('streak-active');
+                el.streakBadge.innerHTML = '<span class="fire-icon">🔥</span> High Efficiency Zone';
             } else {
-                statusDot.style.backgroundColor = "var(--danger-color)";
+                el.circle.style.stroke = "var(--break-color)";
+                el.effDisplay.style.color = "var(--break-color)";
+                el.streakBadge.classList.remove('streak-active');
+                el.streakBadge.innerHTML = '<span class="fire-icon">⚠️</span> Focus Required';
             }
+        }
+
+        // --- STORAGE ---
+        const todayKey = new Date().toDateString();
+        function loadData() {
+            const savedDate = localStorage.getItem('dtt_date');
+            if(savedDate === todayKey) {
+                workSec = parseInt(localStorage.getItem('dtt_work') || 0);
+                breakSec = parseInt(localStorage.getItem('dtt_break') || 0);
+            } else {
+                localStorage.setItem('dtt_date', todayKey);
+                workSec = 0; breakSec = 0;
+            }
+        }
+        function saveData() {
+            localStorage.setItem('dtt_work', workSec);
+            localStorage.setItem('dtt_break', breakSec);
+        }
+
+        // --- CORE LOGIC ---
+        function format(s) {
+            return new Date(s * 1000).toISOString().substr(11, 8);
+        }
+
+        function updateUI() {
+            el.workTime.innerText = format(workSec);
+            el.breakTime.innerText = format(breakSec);
+            
+            const total = workSec + breakSec;
+            const eff = total === 0 ? 100 : Math.round((workSec / total) * 100);
+            
+            el.effDisplay.innerText = eff + "%";
+            setProgress(eff);
         }
 
         function tick() {
-            if (!isPaused && hasStarted) {
-                if (isWorking) {
-                    workSeconds++;
-                } else {
-                    breakSeconds++;
-                }
-                updateDisplay();
+            if(!isPaused && hasStarted) {
+                if(isWorking) workSec++; else breakSec++;
+                updateUI();
                 saveData();
             }
         }
 
-        function startTimer() {
-            if (intervalId) clearInterval(intervalId);
-            intervalId = setInterval(tick, 1000);
+        function toggleTimer() {
+            isWorking = !isWorking;
+            // Visual Swap
+            if(isWorking) {
+                el.switchBtn.innerText = "Switch to Not Doing";
+                el.switchBtn.className = "mode-work"; // Green button
+                el.workCard.classList.add('active', 'pulse-green');
+                el.breakCard.classList.remove('active', 'pulse-orange');
+            } else {
+                el.switchBtn.innerText = "Switch to Doing the Thing";
+                el.switchBtn.className = "mode-break"; // Orange button
+                el.breakCard.classList.add('active', 'pulse-orange');
+                el.workCard.classList.remove('active', 'pulse-green');
+            }
         }
 
-        // Event Listeners
+        // --- EVENTS ---
         document.getElementById('start-btn').addEventListener('click', () => {
             hasStarted = true;
-            startScreen.classList.add('hidden');
-            updateDisplay();
-            startTimer();
-            updateVisuals();
-            updateEfficiency();
+            document.getElementById('start-screen').classList.add('hidden');
+            loadData();
+            updateUI();
+            interval = setInterval(tick, 1000);
+            toggleTimer(); // Init visuals
+            isWorking = !isWorking; // Toggle flips it, so flip back to ensure start state is correct
+            toggleTimer();
         });
 
-        document.getElementById('help-toggle').addEventListener('click', () => {
-            helpScreen.classList.remove('hidden');
-        });
-
-        document.getElementById('close-help-btn').addEventListener('click', () => {
-            helpScreen.classList.add('hidden');
-        });
-
-        switchBtn.addEventListener('click', () => {
+        el.switchBtn.addEventListener('click', () => {
             if(!hasStarted) return;
             if(isPaused) {
                 isPaused = false;
-                startTimer();
-                pauseBtn.textContent = "Pause";
-                pausedBadge.classList.remove('visible');
+                el.pauseBtn.innerText = "Pause";
+                interval = setInterval(tick, 1000);
             }
-            isWorking = !isWorking; 
-            updateVisuals();
+            toggleTimer();
         });
 
-        pauseBtn.addEventListener('click', () => {
+        el.pauseBtn.addEventListener('click', () => {
             if(!hasStarted) return;
             isPaused = !isPaused;
-            if (isPaused) {
-                pauseBtn.textContent = "Resume";
-                pausedBadge.classList.add('visible');
-                clearInterval(intervalId);
+            if(isPaused) {
+                clearInterval(interval);
+                el.pauseBtn.innerText = "Resume";
+                el.workCard.classList.remove('pulse-green');
+                el.breakCard.classList.remove('pulse-orange');
+            } else {
+                interval = setInterval(tick, 1000);
+                el.pauseBtn.innerText = "Pause";
+                // Restore pulse
+                if(isWorking) el.workCard.classList.add('pulse-green');
+                else el.breakCard.classList.add('pulse-orange');
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if(confirm("Reset today's stats?")) {
+                workSec = 0; breakSec = 0;
                 saveData();
-            } else {
-                pauseBtn.textContent = "Pause";
-                pausedBadge.classList.remove('visible');
-                startTimer();
+                updateUI();
+                location.reload();
             }
         });
 
-        resetBtn.addEventListener('click', () => {
-            if(confirm("Reset counters to zero?")) {
-                workSeconds = 0;
-                breakSeconds = 0;
-                isPaused = false;
-                hasStarted = false;
-                isWorking = true;
-                clearInterval(intervalId);
-                localStorage.removeItem('rc_work');
-                localStorage.removeItem('rc_break');
-                updateDisplay();
-                startScreen.classList.remove('hidden');
-                pausedBadge.classList.remove('visible');
-                pauseBtn.textContent = "Pause";
-                updateVisuals();
-            }
-        });
+        // Help overlays
+        document.getElementById('help-toggle').addEventListener('click', () => document.getElementById('help-screen').classList.remove('hidden'));
+        document.getElementById('close-help').addEventListener('click', () => document.getElementById('help-screen').classList.add('hidden'));
 
-        function updateVisuals() {
-            if (isWorking) {
-                workBlock.classList.add('active');
-                breakBlock.classList.remove('active');
-                switchBtn.textContent = "Switch to Not Doing the Thing";
-                switchBtn.style.backgroundColor = "#e67e22";
-            } else {
-                breakBlock.classList.add('active');
-                workBlock.classList.remove('active');
-                switchBtn.textContent = "Switch to Doing the Thing";
-                switchBtn.style.backgroundColor = "#2ecc71";
-            }
-        }
-        
-        updateDisplay();
+        // Init
+        loadData();
+        updateUI();
+
     </script>
 </body>
 </html>
