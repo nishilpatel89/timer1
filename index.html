@@ -226,12 +226,12 @@
 
         <div class="timers-wrapper">
             <div id="work-block" class="timer-block active">
-                <div class="timer-label">Working</div>
+                <div class="timer-label">Doing the Thing</div>
                 <div class="time-display" id="work-time">00:00:00</div>
             </div>
 
             <div id="break-block" class="timer-block">
-                <div class="timer-label">Not Working</div>
+                <div class="timer-label">Not Doing the Thing</div>
                 <div class="time-display" id="break-time">00:00:00</div>
             </div>
         </div>
@@ -245,7 +245,7 @@
         </div>
 
         <div class="controls">
-            <button id="switch-btn">Switch to Not Working</button>
+            <button id="switch-btn">Switch to Not Doing the Thing</button>
             
             <div class="secondary-controls">
                 <button class="secondary-btn" id="pause-btn">Pause</button>
@@ -264,6 +264,21 @@
         let isPaused = false;
         let intervalId = null;
         let hasStarted = false;
+
+        // Load from Local Storage (Auto-Save Feature)
+        const savedDate = localStorage.getItem('rc_date');
+        const today = new Date().toDateString();
+
+        if (savedDate === today) {
+            // Only load data if it's from today
+            if(localStorage.getItem('rc_work')) workSeconds = parseInt(localStorage.getItem('rc_work'));
+            if(localStorage.getItem('rc_break')) breakSeconds = parseInt(localStorage.getItem('rc_break'));
+            // Note: We don't auto-start. User must click "Start" to resume.
+        } else {
+            // New day, clear old data
+            localStorage.clear();
+            localStorage.setItem('rc_date', today);
+        }
 
         // DOM Elements
         const workDisplay = document.getElementById('work-time');
@@ -289,6 +304,12 @@
             return [hours, minutes, seconds]
                 .map(v => v < 10 ? "0" + v : v)
                 .join(":");
+        }
+
+        function saveData() {
+            localStorage.setItem('rc_work', workSeconds);
+            localStorage.setItem('rc_break', breakSeconds);
+            localStorage.setItem('rc_date', new Date().toDateString());
         }
 
         function updateDisplay() {
@@ -323,6 +344,7 @@
                     breakSeconds++;
                 }
                 updateDisplay();
+                saveData(); // Auto-save on every tick
             }
         }
 
@@ -335,9 +357,11 @@
         document.getElementById('start-btn').addEventListener('click', () => {
             hasStarted = true;
             startScreen.classList.add('hidden');
+            // If we have saved data, update display immediately
+            updateDisplay();
             startTimer();
             updateVisuals();
-            updateEfficiency(); // Init dot color
+            updateEfficiency();
         });
 
         // Event: Switch Mode
@@ -361,6 +385,7 @@
                 pauseBtn.textContent = "Resume";
                 pausedBadge.classList.add('visible');
                 clearInterval(intervalId);
+                saveData(); // Ensure save on pause
             } else {
                 pauseBtn.textContent = "Pause";
                 pausedBadge.classList.remove('visible');
@@ -377,6 +402,11 @@
                 hasStarted = false;
                 isWorking = true;
                 clearInterval(intervalId);
+                
+                // Clear Storage
+                localStorage.removeItem('rc_work');
+                localStorage.removeItem('rc_break');
+
                 updateDisplay();
                 startScreen.classList.remove('hidden');
                 pausedBadge.classList.remove('visible');
@@ -390,15 +420,19 @@
             if (isWorking) {
                 workBlock.classList.add('active');
                 breakBlock.classList.remove('active');
-                switchBtn.textContent = "Switch to Not Working";
+                switchBtn.textContent = "Switch to Not Doing the Thing";
                 switchBtn.style.backgroundColor = "#e67e22"; // Orange
             } else {
                 breakBlock.classList.add('active');
                 workBlock.classList.remove('active');
-                switchBtn.textContent = "Switch to Working";
+                switchBtn.textContent = "Switch to Doing the Thing";
                 switchBtn.style.backgroundColor = "#2ecc71"; // Green
             }
         }
+        
+        // Initial display update for saved data
+        updateDisplay();
+
     </script>
 </body>
 </html>
