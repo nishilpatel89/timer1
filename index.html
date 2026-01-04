@@ -4,21 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Do The Thing</title>
-    <meta name="description" content="A simple, no-nonsense chess clock for work. Track 'Doing the Thing' vs 'Not Doing the Thing'.">
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 
     <style>
         :root {
-            /* Clean Light Theme */
             --bg-color: #f0f2f5;
             --card-bg: #ffffff;
             --text-primary: #2d3436;
             --text-secondary: #636e72;
-            
-            /* Action Colors */
-            --work-color: #00b894; /* Mint Green */
-            --break-color: #e17055; /* Terracotta Orange */
+            --work-color: #00b894;
+            --break-color: #e17055;
             --ring-bg: #dfe6e9;
         }
 
@@ -32,452 +28,411 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Centers vertical widget */
+            justify-content: center;
             overflow-x: hidden;
         }
 
         .container {
             background: var(--card-bg);
-            /* Fluid padding: scales down on small windows */
             padding: clamp(1rem, 3vmin, 2.5rem); 
             border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.03);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
             text-align: center;
             width: 90%;
-            max-width: 450px; /* Slightly tighter max width */
-            
-            /* Ensure it fits in small vertical windows */
+            max-width: 450px;
             max-height: 95vh;
-            overflow-y: auto; /* Allow internal scroll if REALLY tiny */
-            
+            overflow-y: auto;
+            position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            border: 1px solid rgba(255,255,255,0.8);
-            box-sizing: border-box;
         }
 
-        /* --- THE HUD (Ring) --- */
+        /* --- VIEWS --- */
+        .view-section { display: none; width: 100%; height: 100%; }
+        .view-section.active { display: flex; flex-direction: column; justify-content: center; }
+
+        /* --- AUTH SCREEN --- */
+        .auth-form { display: flex; flex-direction: column; gap: 15px; margin-top: 1rem; }
+        .auth-input {
+            padding: 1rem; border: 1px solid #dfe6e9; border-radius: 12px;
+            font-size: 1rem; background: #f8f9fa;
+        }
+        .auth-btn {
+            padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; border: none;
+            background: #2d3436; color: white; transition: 0.2s;
+        }
+        .auth-btn:hover { background: #000; }
+        .switch-auth { font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; text-decoration: underline; margin-top: 10px; }
+
+        /* --- HUD --- */
         .hud-wrapper {
             position: relative;
-            /* Key Change: Ring size based on Viewport Min (vmin) so it shrinks */
             width: clamp(150px, 35vmin, 220px);
             height: clamp(150px, 35vmin, 220px);
             margin: 0 auto clamp(1rem, 3vh, 2rem) auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
-
-        /* SVG Scales to wrapper */
-        .progress-ring { 
-            transform: rotate(-90deg); 
-            transform-origin: 50% 50%;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .progress-ring__circle { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
-
+        .progress-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .progress-ring__circle { transition: stroke-dashoffset 0.35s; }
         .hud-stats { position: absolute; display: flex; flex-direction: column; align-items: center; }
-        .efficiency-big {
-            font-size: clamp(2rem, 8vmin, 3.5rem); /* Fluid Font */
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -2px;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-        .efficiency-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary); margin-top: 2px; }
+        .efficiency-big { font-size: clamp(2rem, 8vmin, 3.5rem); font-weight: 800; line-height: 1; }
+        .efficiency-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary); }
 
         /* --- TIMERS --- */
-        .timers-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: clamp(1rem, 3vh, 2rem);
-            gap: 10px;
-        }
-
+        .timers-row { display: flex; gap: 10px; margin-bottom: clamp(1rem, 3vh, 2rem); }
         .timer-card {
-            flex: 1;
-            background: #f8f9fa;
-            padding: clamp(0.5rem, 2vh, 1rem);
-            border-radius: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 2px solid transparent;
-            opacity: 0.5;
-            transform: scale(0.98);
+            flex: 1; background: #f8f9fa; padding: clamp(0.5rem, 2vh, 1rem); border-radius: 16px;
+            border: 2px solid transparent; opacity: 0.5; transform: scale(0.98); transition: 0.3s;
         }
-
-        .timer-card.active {
-            opacity: 1;
-            transform: scale(1.02);
-            background: #fff;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-
-        .timer-card.active.pulse-green { border-color: var(--work-color); animation: soft-pulse-green 3s infinite ease-in-out; }
+        .timer-card.active { opacity: 1; transform: scale(1.02); background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .timer-card.active.pulse-green { border-color: var(--work-color); animation: pulse-g 3s infinite; }
         .timer-card.active.pulse-orange { border-color: var(--break-color); }
+        @keyframes pulse-g { 0%,100% { box-shadow:0 0 0 0 rgba(0,184,148,0);} 70% {box-shadow:0 0 0 10px rgba(0,184,148,0.2);} }
+        .timer-val { font-family: 'Courier New', monospace; font-size: clamp(1.2rem, 5vmin, 1.6rem); font-weight: 700; }
+        .timer-title { font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; }
 
-        @keyframes soft-pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.2); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 184, 148, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 184, 148, 0); }
-        }
-
-        .timer-val {
-            font-family: 'Courier New', monospace;
-            font-size: clamp(1.2rem, 5vmin, 1.6rem);
-            font-weight: 700;
-            margin-top: 2px;
-            color: var(--text-primary);
-        }
-        .timer-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
-
-        /* --- BIG SWITCH BUTTON --- */
+        /* --- CONTROLS --- */
         #switch-btn {
-            background: #2d3436;
-            color: white;
-            width: 100%;
-            padding: clamp(0.8rem, 2.5vh, 1.2rem);
-            border-radius: 16px;
-            font-size: clamp(0.9rem, 3vmin, 1.1rem);
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 1rem;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: #2d3436; color: white; width: 100%; padding: clamp(0.8rem, 2.5vh, 1.2rem);
+            border-radius: 16px; font-size: clamp(0.9rem, 3vmin, 1.1rem); font-weight: 700;
+            cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.2s;
         }
-
-        #switch-btn:active { transform: scale(0.98); }
-
-        #switch-btn.mode-work { background: var(--work-color); box-shadow: 0 8px 20px rgba(0, 184, 148, 0.3); }
-        #switch-btn.mode-break { background: var(--break-color); box-shadow: 0 8px 20px rgba(225, 112, 85, 0.3); }
-
-        /* --- STREAK BADGE --- */
-        .streak-container {
-            margin-top: clamp(0.5rem, 2vh, 1.5rem);
-            padding: 0.5rem 1rem;
-            background: #f1f2f6;
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-        .fire-icon { font-size: 1.1rem; filter: grayscale(100%); transition: 0.3s; }
-        .streak-active .fire-icon { filter: grayscale(0%); transform: scale(1.1); }
-        .streak-active { background: rgba(0, 184, 148, 0.1); color: #009476; }
-
-        /* Secondary Controls */
-        .secondary-controls { display: flex; gap: 10px; width: 100%; }
+        #switch-btn.mode-work { background: var(--work-color); }
+        #switch-btn.mode-break { background: var(--break-color); }
         
-        .sec-btn {
-            background: #f1f2f6; 
-            border: none; 
-            color: var(--text-secondary);
-            padding: clamp(0.6rem, 2vh, 0.8rem); 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-size: 0.85rem; 
-            font-weight: 600; 
-            transition: 0.2s;
-            flex: 1; /* Stretch horizontally */
-        }
-        
+        .secondary-controls { display: flex; gap: 10px; margin-top: 10px; }
+        .sec-btn { flex: 1; background: #f1f2f6; border: none; color: var(--text-secondary); padding: 0.8rem; border-radius: 12px; cursor: pointer; font-weight: 600; }
         .sec-btn:hover { background: #e1e2e6; color: var(--text-primary); }
 
-        /* --- OVERLAYS --- */
-        .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.98);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100;
-            padding: 2rem;
-            box-sizing: border-box;
-            text-align: center;
+        /* --- HISTORY LIST --- */
+        .history-list { list-style: none; padding: 0; margin-top: 1rem; max-height: 300px; overflow-y: auto; }
+        .history-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem;
         }
-        .start-btn {
-            background: var(--work-color); color: white; border: none; padding: 1rem 3rem;
-            font-size: 1.5rem; font-weight: 700; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0, 184, 148, 0.3); transition: transform 0.2s;
-        }
-        .start-btn:hover { transform: scale(1.05); }
+        .hist-score { font-weight: bold; padding: 4px 8px; border-radius: 8px; font-size: 0.8rem; }
+        .score-good { background: rgba(0, 184, 148, 0.1); color: var(--work-color); }
+        .score-bad { background: rgba(225, 112, 85, 0.1); color: var(--break-color); }
+
+        /* --- OVERLAYS & NAV --- */
+        .nav-bar { display: flex; justify-content: space-between; width: 100%; margin-bottom: 1rem; }
+        .nav-link { font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; text-decoration: underline; }
+        .streak-container { margin-top: 1rem; padding: 0.5rem; background: #f1f2f6; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+        .fire-icon { filter: grayscale(100%); }
+        .streak-active { background: rgba(0,184,148,0.1); color: #009476; }
+        .streak-active .fire-icon { filter: grayscale(0%); }
+        
+        .loading-cover { position:absolute; top:0; left:0; width:100%; height:100%; background:white; z-index:999; display:flex; justify-content:center; align-items:center; }
         .hidden { display: none !important; }
-
-        /* Help Button Specifics */
-        #close-help {
-            flex: 0 0 auto; /* Don't stretch */
-            width: auto;
-            min-width: 120px;
-            background: var(--text-primary);
-            color: white;
-            margin-top: 1rem;
-        }
-        #close-help:hover { background: #000; }
-
-        /* Help Toggle (Top Right) */
-        .help-btn { 
-            position: absolute; top: 15px; right: 15px; 
-            background: #f1f2f6; border: none; color: var(--text-secondary); 
-            width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; 
-            z-index: 10;
-        }
-        .help-btn:hover { background: #e1e2e6; }
-
-        /* SEO Text: Only visible if window is tall enough */
-        .seo-text {
-            max-width: 600px;
-            margin: 2rem auto;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            text-align: left;
-            padding: 0 1.5rem;
-            font-size: 0.9rem;
-        }
-        /* Hide SEO text on widget mode (short windows) */
-        @media (max-height: 700px) {
-            .seo-text { display: none; }
-            body { justify-content: center; padding-bottom: 0; }
-            .container { margin-top: 0; }
-        }
 
     </style>
 </head>
 <body>
 
-    <div id="help-screen" class="overlay hidden">
-        <h2 style="color:#2d3436; margin-bottom:1rem">The Rules</h2>
-        <ul style="color:#636e72; text-align:left; line-height:1.8; margin-bottom:1rem; padding-left: 20px;">
-            <li>🎯 <strong>Doing the Thing:</strong> Deep Focus.</li>
-            <li>🛑 <strong>Not Doing the Thing:</strong> Phone, Email.</li>
-            <li>🔥 <strong>Streak:</strong> Maintain >75%.</li>
-        </ul>
-        <button class="sec-btn" id="close-help">Got it</button>
-    </div>
-
-    <div id="start-screen" class="overlay">
-        <h1 style="color:#2d3436; font-size: clamp(2rem, 5vw, 2.5rem); margin-bottom:2rem; text-transform:uppercase; letter-spacing:1px; font-weight:800;">Do The Thing</h1>
-        <button class="start-btn" id="start-btn">Start Day</button>
-    </div>
-
     <div class="container">
-        <button class="help-btn" id="help-toggle" aria-label="Help">?</button>
+        
+        <div id="loading-screen" class="loading-cover">Loading...</div>
 
-        <div class="hud-wrapper">
-            <svg class="progress-ring" viewBox="0 0 220 220">
-                <circle class="progress-ring__bg" stroke="#dfe6e9" stroke-width="12" fill="transparent" r="90" cx="110" cy="110"/>
-                <circle class="progress-ring__circle" id="progress-circle" stroke="#00b894" stroke-width="12" stroke-linecap="round" fill="transparent" r="90" cx="110" cy="110"/>
-            </svg>
-            <div class="hud-stats">
-                <span class="efficiency-big" id="eff-display">100%</span>
-                <span class="efficiency-label">Efficiency</span>
-            </div>
-        </div>
-
-        <div class="timers-row">
-            <div id="work-card" class="timer-card active pulse-green">
-                <div class="timer-title">Doing the Thing</div>
-                <div class="timer-val" id="work-time">00:00:00</div>
-            </div>
-            <div id="break-card" class="timer-card">
-                <div class="timer-title">Not Doing the Thing</div>
-                <div class="timer-val" id="break-time">00:00:00</div>
-            </div>
-        </div>
-
-        <div id="streak-badge" class="streak-container">
-            <span class="fire-icon">🔥</span>
-            <span id="streak-text">Focus Zone Active</span>
-        </div>
-
-        <div style="margin-top: clamp(1rem, 3vh, 2rem);">
-            <button id="switch-btn" class="mode-work">Switch to Not Doing the Thing</button>
+        <div id="view-auth" class="view-section">
+            <h1 style="margin-bottom:0.5rem">Do The Thing</h1>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:0;">Sign in to save your history</p>
             
-            <div class="secondary-controls">
-                <button class="sec-btn" id="pause-btn">Pause</button>
-                <button class="sec-btn" id="reset-btn">Reset</button>
+            <div class="auth-form">
+                <input type="email" id="email" class="auth-input" placeholder="Email">
+                <input type="password" id="password" class="auth-input" placeholder="Password">
+                <button id="auth-main-btn" class="auth-btn">Log In</button>
+                <div id="auth-error" style="color:red; font-size:0.8rem;"></div>
+                <div id="auth-toggle" class="switch-auth">Need an account? Sign Up</div>
             </div>
         </div>
+
+        <div id="view-app" class="view-section">
+            <div class="nav-bar">
+                <div class="nav-link" id="btn-logout">Log Out</div>
+                <div class="nav-link" id="btn-history">View History</div>
+            </div>
+
+            <div class="hud-wrapper">
+                <svg class="progress-ring" viewBox="0 0 220 220">
+                    <circle stroke="#dfe6e9" stroke-width="12" fill="transparent" r="90" cx="110" cy="110"/>
+                    <circle id="progress-circle" stroke="#00b894" stroke-width="12" stroke-linecap="round" fill="transparent" r="90" cx="110" cy="110" stroke-dasharray="565 565" stroke-dashoffset="0"/>
+                </svg>
+                <div class="hud-stats">
+                    <span class="efficiency-big" id="eff-display">100%</span>
+                    <span class="efficiency-label">Efficiency</span>
+                </div>
+            </div>
+
+            <div class="timers-row">
+                <div id="work-card" class="timer-card active pulse-green">
+                    <div class="timer-title">Doing the Thing</div>
+                    <div class="timer-val" id="work-time">00:00:00</div>
+                </div>
+                <div id="break-card" class="timer-card">
+                    <div class="timer-title">Not Doing</div>
+                    <div class="timer-val" id="break-time">00:00:00</div>
+                </div>
+            </div>
+
+            <div id="streak-badge" class="streak-container">
+                <span class="fire-icon">🔥</span> Focus Zone Active
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <button id="switch-btn" class="mode-work">Switch to Not Doing</button>
+                <div class="secondary-controls">
+                    <button class="sec-btn" id="pause-btn">Pause</button>
+                    <button class="sec-btn" id="reset-btn">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-history" class="view-section">
+            <div class="nav-bar">
+                <h3>History</h3>
+                <div class="nav-link" id="btn-close-history" style="font-size:1rem; padding:10px;">✕ Close</div>
+            </div>
+            <ul id="history-list" class="history-list">
+                <li style="color:#aaa; font-size:0.9rem;">Loading history...</li>
+            </ul>
+        </div>
+
     </div>
 
-    <div class="seo-text">
-        <h2>The Honest Productivity Timer for Deep Work</h2>
-        <p>
-            Most productivity timers are too complicated. <strong>Do The Thing</strong> acts like a chess clock for your workday. 
-            It forces you to be honest about how you spend your time.
-        </p>
-        <p>
-            Whether you are managing ADHD, trying to improve your focus, or just want to 
-            audit your daily efficiency, this tool gives you immediate feedback. 
-        </p>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    <script>
-        // --- CONFIG & STATE ---
-        const GOAL = 75;
-        let workSec = 0, breakSec = 0;
-        let isWorking = true, isPaused = false, hasStarted = false;
-        let interval = null;
-
-        // --- DOM ELEMENTS ---
-        const el = {
-            workTime: document.getElementById('work-time'),
-            breakTime: document.getElementById('break-time'),
-            effDisplay: document.getElementById('eff-display'),
-            circle: document.getElementById('progress-circle'),
-            switchBtn: document.getElementById('switch-btn'),
-            workCard: document.getElementById('work-card'),
-            breakCard: document.getElementById('break-card'),
-            streakBadge: document.getElementById('streak-badge'),
-            pauseBtn: document.getElementById('pause-btn')
+        // --- YOUR KEYS ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2ysrcWSmiiUIrIRHl8JGdYeSfrPLqpUg",
+            authDomain: "dothething-babad.firebaseapp.com",
+            projectId: "dothething-babad",
+            storageBucket: "dothething-babad.firebasestorage.app",
+            messagingSenderId: "543977536594",
+            appId: "1:543977536594:web:9d2bd28103c31d2393f38b",
+            measurementId: "G-7H5301SWBC"
         };
 
-        // --- CIRCLE LOGIC ---
-        // We use viewBox="0 0 220 220", so the radius is always 90 relative to that unit
-        const radius = 90;
-        const circumference = radius * 2 * Math.PI;
-        el.circle.style.strokeDasharray = `${circumference} ${circumference}`;
-        el.circle.style.strokeDashoffset = 0; // Start full
+        // Initialize Firebase
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch(e) { console.error("Firebase not configured", e); }
 
-        function setProgress(percent) {
-            const offset = circumference - (percent / 100) * circumference;
-            el.circle.style.strokeDashoffset = offset;
-            
-            // Color Logic
-            if(percent >= GOAL) {
-                el.circle.style.stroke = "var(--work-color)";
-                el.effDisplay.style.color = "var(--text-primary)";
-                el.streakBadge.classList.add('streak-active');
-                el.streakBadge.innerHTML = '<span class="fire-icon">🔥</span> High Efficiency Zone';
-            } else {
-                el.circle.style.stroke = "var(--break-color)";
-                el.effDisplay.style.color = "var(--break-color)";
-                el.streakBadge.classList.remove('streak-active');
-                el.streakBadge.innerHTML = '<span class="fire-icon">⚠️</span> Focus Required';
-            }
+        // --- STATE ---
+        let user = null;
+        let workSec = 0, breakSec = 0;
+        let isWorking = true, isPaused = false;
+        let interval = null;
+        let isSignUp = false;
+
+        // --- UI REFS ---
+        const views = { auth: document.getElementById('view-auth'), app: document.getElementById('view-app'), history: document.getElementById('view-history') };
+        const el = {
+            email: document.getElementById('email'), pass: document.getElementById('password'),
+            authBtn: document.getElementById('auth-main-btn'), authErr: document.getElementById('auth-error'),
+            authToggle: document.getElementById('auth-toggle'), loading: document.getElementById('loading-screen'),
+            workTime: document.getElementById('work-time'), breakTime: document.getElementById('break-time'),
+            effDisplay: document.getElementById('eff-display'), circle: document.getElementById('progress-circle'),
+            switchBtn: document.getElementById('switch-btn'), workCard: document.getElementById('work-card'),
+            breakCard: document.getElementById('break-card'), streakBadge: document.getElementById('streak-badge'),
+            pauseBtn: document.getElementById('pause-btn'), historyList: document.getElementById('history-list')
+        };
+
+        // --- AUTH LOGIC ---
+        function showView(name) {
+            el.loading.classList.add('hidden');
+            Object.values(views).forEach(v => v.classList.remove('active'));
+            views[name].classList.add('active');
         }
 
-        // --- STORAGE ---
-        const todayKey = new Date().toDateString();
-        function loadData() {
-            const savedDate = localStorage.getItem('dtt_date');
-            if(savedDate === todayKey) {
-                workSec = parseInt(localStorage.getItem('dtt_work') || 0);
-                breakSec = parseInt(localStorage.getItem('dtt_break') || 0);
+        onAuthStateChanged(auth, (u) => {
+            if (u) {
+                user = u;
+                showView('app');
+                loadToday();
+                interval = setInterval(tick, 1000);
             } else {
-                localStorage.setItem('dtt_date', todayKey);
+                user = null;
+                showView('auth');
+            }
+        });
+
+        el.authToggle.addEventListener('click', () => {
+            isSignUp = !isSignUp;
+            el.authBtn.textContent = isSignUp ? "Sign Up" : "Log In";
+            el.authToggle.textContent = isSignUp ? "Have an account? Log In" : "Need an account? Sign Up";
+            el.authErr.textContent = "";
+        });
+
+        el.authBtn.addEventListener('click', async () => {
+            const email = el.email.value;
+            const pass = el.pass.value;
+            try {
+                if (isSignUp) await createUserWithEmailAndPassword(auth, email, pass);
+                else await signInWithEmailAndPassword(auth, email, pass);
+            } catch (e) {
+                el.authErr.textContent = e.message.replace("Firebase: ", "");
+            }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            clearInterval(interval);
+            signOut(auth);
+        });
+
+        // --- DATABASE LOGIC ---
+        const getTodayKey = () => new Date().toISOString().split('T')[0];
+
+        async function loadToday() {
+            if (!user) return;
+            const ref = doc(db, "users", user.uid, "days", getTodayKey());
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const d = snap.data();
+                workSec = d.work || 0;
+                breakSec = d.break || 0;
+                isWorking = d.isWorking !== undefined ? d.isWorking : true; // Restore state
+            } else {
                 workSec = 0; breakSec = 0;
             }
-        }
-        function saveData() {
-            localStorage.setItem('dtt_work', workSec);
-            localStorage.setItem('dtt_break', breakSec);
+            isPaused = true; // Always start paused on load to avoid accidents
+            updateUI();
+            toggleVisuals(); // Ensure visuals match restored state
         }
 
-        // --- CORE LOGIC ---
-        function format(s) {
-            return new Date(s * 1000).toISOString().substr(11, 8);
+        async function saveDB() {
+            if (!user) return;
+            const ref = doc(db, "users", user.uid, "days", getTodayKey());
+            const total = workSec + breakSec;
+            const eff = total === 0 ? 100 : Math.round((workSec / total) * 100);
+            await setDoc(ref, {
+                date: new Date(),
+                work: workSec,
+                break: breakSec,
+                efficiency: eff,
+                isWorking: isWorking
+            }, { merge: true });
         }
+
+        // --- HISTORY LOGIC ---
+        document.getElementById('btn-history').addEventListener('click', async () => {
+            showView('history');
+            el.historyList.innerHTML = "<li>Loading...</li>";
+            const q = query(collection(db, "users", user.uid, "days"), orderBy("date", "desc"));
+            const snaps = await getDocs(q);
+            el.historyList.innerHTML = "";
+            
+            snaps.forEach(doc => {
+                const d = doc.data();
+                const dateStr = new Date(d.date.seconds * 1000).toLocaleDateString();
+                const totalMin = Math.round((d.work + d.break) / 60);
+                const scoreClass = d.efficiency >= 75 ? "score-good" : "score-bad";
+                
+                const li = document.createElement('li');
+                li.className = "history-item";
+                li.innerHTML = `
+                    <span>${dateStr} <span style="color:#ccc">|</span> ${totalMin}m tracked</span>
+                    <span class="hist-score ${scoreClass}">${d.efficiency}%</span>
+                `;
+                el.historyList.appendChild(li);
+            });
+            if(snaps.empty) el.historyList.innerHTML = "<li>No history yet.</li>";
+        });
+
+        document.getElementById('btn-close-history').addEventListener('click', () => showView('app'));
+
+        // --- APP CORE ---
+        const GOAL = 75;
+        const radius = 90;
+        const circumference = radius * 2 * Math.PI;
+        
+        function format(s) { return new Date(s * 1000).toISOString().substr(11, 8); }
 
         function updateUI() {
             el.workTime.innerText = format(workSec);
             el.breakTime.innerText = format(breakSec);
-            
             const total = workSec + breakSec;
             const eff = total === 0 ? 100 : Math.round((workSec / total) * 100);
             
             el.effDisplay.innerText = eff + "%";
-            setProgress(eff);
-        }
+            const offset = circumference - (eff / 100) * circumference;
+            el.circle.style.strokeDashoffset = offset;
 
-        function tick() {
-            if(!isPaused && hasStarted) {
-                if(isWorking) workSec++; else breakSec++;
-                updateUI();
-                saveData();
+            if (eff >= GOAL) {
+                el.circle.style.stroke = "var(--work-color)";
+                el.effDisplay.style.color = "var(--text-primary)";
+                el.streakBadge.classList.add('streak-active');
+            } else {
+                el.circle.style.stroke = "var(--break-color)";
+                el.effDisplay.style.color = "var(--break-color)";
+                el.streakBadge.classList.remove('streak-active');
             }
         }
 
-        function toggleTimer() {
-            isWorking = !isWorking;
-            // Visual Swap
-            if(isWorking) {
-                el.switchBtn.innerText = "Switch to Not Doing the Thing";
-                el.switchBtn.className = "mode-work"; // Green button
+        function toggleVisuals() {
+             if(isWorking) {
+                el.switchBtn.innerText = "Switch to Not Doing";
+                el.switchBtn.className = "mode-work";
                 el.workCard.classList.add('active', 'pulse-green');
                 el.breakCard.classList.remove('active', 'pulse-orange');
             } else {
                 el.switchBtn.innerText = "Switch to Doing the Thing";
-                el.switchBtn.className = "mode-break"; // Orange button
+                el.switchBtn.className = "mode-break";
                 el.breakCard.classList.add('active', 'pulse-orange');
                 el.workCard.classList.remove('active', 'pulse-green');
             }
-        }
-
-        // --- EVENTS ---
-        document.getElementById('start-btn').addEventListener('click', () => {
-            hasStarted = true;
-            document.getElementById('start-screen').classList.add('hidden');
-            loadData();
-            updateUI();
-            interval = setInterval(tick, 1000);
-            toggleTimer(); // Init visuals
-            isWorking = !isWorking; // Toggle flips it, so flip back to ensure start state is correct
-            toggleTimer();
-        });
-
-        el.switchBtn.addEventListener('click', () => {
-            if(!hasStarted) return;
+            
+            // Handle Pause State Visuals
             if(isPaused) {
-                isPaused = false;
-                el.pauseBtn.innerText = "Pause";
-                interval = setInterval(tick, 1000);
-            }
-            toggleTimer();
-        });
-
-        el.pauseBtn.addEventListener('click', () => {
-            if(!hasStarted) return;
-            isPaused = !isPaused;
-            if(isPaused) {
-                clearInterval(interval);
                 el.pauseBtn.innerText = "Resume";
                 el.workCard.classList.remove('pulse-green');
                 el.breakCard.classList.remove('pulse-orange');
             } else {
-                interval = setInterval(tick, 1000);
                 el.pauseBtn.innerText = "Pause";
-                // Restore pulse
-                if(isWorking) el.workCard.classList.add('pulse-green');
-                else el.breakCard.classList.add('pulse-orange');
             }
+        }
+
+        function tick() {
+            if(!isPaused) {
+                if(isWorking) workSec++; else breakSec++;
+                updateUI();
+                // Save occasionally (every 10s) to prevent data loss on crash, 
+                // but not every second to save database writes
+                if((workSec + breakSec) % 10 === 0) saveDB();
+            }
+        }
+
+        el.switchBtn.addEventListener('click', () => {
+            // Unpause if paused
+            if(isPaused) {
+                isPaused = false;
+            }
+            isWorking = !isWorking;
+            toggleVisuals();
+            saveDB(); 
+        });
+
+        el.pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            toggleVisuals();
+            saveDB();
         });
 
         document.getElementById('reset-btn').addEventListener('click', () => {
             if(confirm("Reset today's stats?")) {
                 workSec = 0; breakSec = 0;
-                saveData();
+                isPaused = true;
+                saveDB();
                 updateUI();
-                location.reload();
+                toggleVisuals();
             }
         });
-
-        // Help overlays
-        document.getElementById('help-toggle').addEventListener('click', () => document.getElementById('help-screen').classList.remove('hidden'));
-        document.getElementById('close-help').addEventListener('click', () => document.getElementById('help-screen').classList.add('hidden'));
-
-        // Init
-        loadData();
-        updateUI();
 
     </script>
 </body>
 </html>
-
